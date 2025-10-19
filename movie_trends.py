@@ -5,8 +5,8 @@ import ast
 import matplotlib.pyplot as plt
 
 def clean_movie_data(df: DataFrame) -> DataFrame:
-    print(df.head())
-    df.info()
+    #print(df.head())
+    #df.info()
     # Time to clean.
     print("Cleaning...")
 
@@ -111,7 +111,7 @@ def analyse_budget_vs_revenue(df: DataFrame):
     df_filtered = df[df['budget'] > 1]
 
     plt.figure(figsize=(10,6))
-    plt.scatter(df_filtered['budget'], df_filtered['revenue'], alpha=0.5)
+    plt.scatter(df_filtered['budget'], df_filtered['revenue'], alpha=0.5, color='green')
     plt.title("Movie Budget vs. Revenue")
     plt.xlabel('Budget (in millions $)')
     plt.ylabel('Revenue (in millions $)')
@@ -120,19 +120,35 @@ def analyse_budget_vs_revenue(df: DataFrame):
     print("Plot saved. [Movie Budget vs. Revenue]")
 
 def analyse_releases_over_time(df: DataFrame):
-    return
+    # Releases Over Time
+    yearly_counts = df['release_year'].value_counts().sort_index()
+    # Filtering out very old years that have few movies to make the plot cleaner.
+    yearly_counts = yearly_counts[yearly_counts.index > 1940]
+    # The dataset ends in 2017, so I must account for that too.
+    yearly_counts = yearly_counts[yearly_counts.index < 2017]
+
+    plt.figure(figsize=(12, 6))
+    yearly_counts.plot(kind='line', color='red')
+    plt.title('Number of Movies Released Per Year (1941-2016)')
+    plt.xlabel('Year')
+    plt.ylabel('Number of Movies')
+    plt.grid(True)
+    plt.savefig('visualisations/releases_over_time.png')
+    print("Plot saved. [Movie Releases Over Time]")
+
 
 
 if __name__ == '__main__':
+
     DATA_PATH = 'data/movies_metadata.csv'
     df = load_data(DATA_PATH)
 
     if df is not None:
         df_cleaned = clean_movie_data(df.copy())
         if df_cleaned is not None and not df_cleaned.empty:
-            print("yep")
             analyse_genres(df_cleaned.copy())
             analyse_budget_vs_revenue(df_cleaned.copy())
+            analyse_releases_over_time(df_cleaned.copy())
         else:
             print("Data cleaning resulted in an empty DataFrame.")
     else:
