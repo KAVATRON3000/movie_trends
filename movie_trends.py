@@ -82,17 +82,11 @@ def analyse_genres(df: DataFrame):
     # and a human-readable string representing its genre.
     # Deserialises by SAFELY converting strings into a Python list.
     df['genres'] = df['genres'].apply(ast.literal_eval)
-
     # Extracts just the name from each dict in the list.
     genres_list = df['genres'].apply(lambda x: [i['name'] for i in x])
-
     # Transforms each item in a list into its own row.
     all_genres = genres_list.explode()
-
     genre_counts = all_genres.value_counts().head(10)
-
-    print("Top 10 most common genres:")
-    print(genre_counts)
 
     # Plotting the graph
     plt.figure(figsize=(12,8))
@@ -136,7 +130,34 @@ def analyse_releases_over_time(df: DataFrame):
     plt.savefig('visualisations/releases_over_time.png')
     print("Plot saved. [Movie Releases Over Time]")
 
+def analyse_genre_profitability(df: DataFrame):
+    # Genre Profitability
+    # Calculates profit for each movie.
+    df['profit'] = df['revenue'] - df['budget']
+    # Ensures the genres column is in the correct list format.
+    if isinstance(df['genres'].iloc[0], str):
+        df['genres'] = df['genres'].apply(ast.literal_eval)
+    # Extracts genre names into a list.
+    df['genre_names'] = df['genres'].apply(lambda x: [i['name'] for i in x])
+    # Explodes the DataFrame to have one row per genre per movie.
+    df_exploded = df.explode('genre_names')
+    # Groups by genre name and calculate mean profit,
+    # also counting num of movies to ensure sample size is reasonable.
+    genre_profit = df_exploded.groupby('genre_names')['profit'].agg(['mean', 'count'])
+    # Filters out genres with a small number of movies for a more stable average.
+    genre_profit = genre_profit[genre_profit['count'] > 50]
+    # Sorts by the average profit.
+    genre_profit = genre_profit.sort_values(by='mean', ascending=False).head(10)
 
+    # Plotting time
+    plt.figure(figsize=(12, 8))
+    genre_profit['mean'].sort_values(ascending=True).plot(kind='barh', color='blue')
+    plt.title('Top 10 Most Profitable Movie Genres (Average Profit)')
+    plt.xlabel('Average Profit (in millions $)')
+    plt.ylabel('Genre')
+    plt.tight_layout()
+    plt.savefig('visualisations/top_10_profitable_genres.png')
+    print("Plot saved. [Movie Genres Profitability]")
 
 if __name__ == '__main__':
 
@@ -149,6 +170,7 @@ if __name__ == '__main__':
             analyse_genres(df_cleaned.copy())
             analyse_budget_vs_revenue(df_cleaned.copy())
             analyse_releases_over_time(df_cleaned.copy())
+            analyse_genre_profitability(df_cleaned.copy())
         else:
             print("Data cleaning resulted in an empty DataFrame.")
     else:
