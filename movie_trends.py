@@ -76,7 +76,7 @@ def load_data(data_path: str):
         print("Please make sure the movies_metadata.csv file is in the data folder.")
         return None
 
-def analyse_genres(df):
+def analyse_genres(df: DataFrame):
     # Finds the top 10 most common movie genres.
     # The genre column contains a serialised dict containing an id representing its genre,
     # and a human-readable string representing its genre.
@@ -104,10 +104,22 @@ def analyse_genres(df):
     plt.savefig('visualisations/top_10_genres.png')
     print("Plot saved. [Top 10 Most Common Movie Genres]")
 
-def analyse_budget_vs_revenue(df):
-    return
+def analyse_budget_vs_revenue(df: DataFrame):
+    # Movie Budget vs. Revenue
+    # All this does is filter out any movies with a budget less than $1M,
+    # as they could be inaccurate.
+    df_filtered = df[df['budget'] > 1]
 
-def analyse_releases_over_time(df):
+    plt.figure(figsize=(10,6))
+    plt.scatter(df_filtered['budget'], df_filtered['revenue'], alpha=0.5)
+    plt.title("Movie Budget vs. Revenue")
+    plt.xlabel('Budget (in millions $)')
+    plt.ylabel('Revenue (in millions $)')
+    plt.grid(True)
+    plt.savefig('visualisations/budget_vs_revenue_scatter.png')
+    print("Plot saved. [Movie Budget vs. Revenue]")
+
+def analyse_releases_over_time(df: DataFrame):
     return
 
 
@@ -120,6 +132,7 @@ if __name__ == '__main__':
         if df_cleaned is not None and not df_cleaned.empty:
             print("yep")
             analyse_genres(df_cleaned.copy())
+            analyse_budget_vs_revenue(df_cleaned.copy())
         else:
             print("Data cleaning resulted in an empty DataFrame.")
     else:
