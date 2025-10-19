@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+import ast
 import matplotlib.pyplot as plt
 
 def clean_movie_data(df: DataFrame) -> DataFrame:
@@ -71,12 +72,37 @@ def load_data(data_path: str):
         print(f"Shape of the dataset (rows, columns): {df.shape}")
         return df
     except FileNotFoundError:
-        print(f'Error: The file was not found.')
+        print("Error: The file was not found.")
         print("Please make sure the movies_metadata.csv file is in the data folder.")
         return None
 
 def analyse_genres(df):
-    return
+    # Finds the top 10 most common movie genres.
+    # The genre column contains a serialised dict containing an id representing its genre,
+    # and a human-readable string representing its genre.
+    # Deserialises by SAFELY converting strings into a Python list.
+    df['genres'] = df['genres'].apply(ast.literal_eval)
+
+    # Extracts just the name from each dict in the list.
+    genres_list = df['genres'].apply(lambda x: [i['name'] for i in x])
+
+    # Transforms each item in a list into its own row.
+    all_genres = genres_list.explode()
+
+    genre_counts = all_genres.value_counts().head(10)
+
+    print("Top 10 most common genres:")
+    print(genre_counts)
+
+    # Plotting the graph
+    plt.figure(figsize=(12,8))
+    genre_counts.sort_values(ascending=True).plot(kind='barh', color='purple')
+    plt.title("Top 10 Most Common Movie Genres")
+    plt.xlabel('Number of Movies')
+    plt.ylabel('Genre')
+    plt.tight_layout()
+    plt.savefig('visualisations/top_10_genres.png')
+    print("Plot saved. [Top 10 Most Common Movie Genres]")
 
 def analyse_budget_vs_revenue(df):
     return
@@ -93,6 +119,7 @@ if __name__ == '__main__':
         df_cleaned = clean_movie_data(df.copy())
         if df_cleaned is not None and not df_cleaned.empty:
             print("yep")
+            analyse_genres(df_cleaned.copy())
         else:
             print("Data cleaning resulted in an empty DataFrame.")
     else:
